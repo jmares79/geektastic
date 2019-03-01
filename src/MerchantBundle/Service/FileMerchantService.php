@@ -15,6 +15,7 @@ class FileMerchantService implements TransactionFetcherInterface
     protected $transactionsReader;
     protected $products = array();
     protected $transactions = array();
+    protected $totalPrices = array();
 
     public function __construct(
         FileReaderInterface $productsReader,
@@ -24,11 +25,6 @@ class FileMerchantService implements TransactionFetcherInterface
         $this->productsReader = $productsReader;
         $this->transactionsReader = $transactionsReader;
     }
-
-    // public function getHeader()
-    // {
-    //     return $this->transactions['header'];
-    // }
 
     public function getFetchedTransactions()
     {
@@ -50,10 +46,6 @@ class FileMerchantService implements TransactionFetcherInterface
         }
 
         $this->productsReader->closeStream();
-
-        return [
-            'products' => $this->products
-        ];
     }
 
     /**
@@ -68,7 +60,6 @@ class FileMerchantService implements TransactionFetcherInterface
 
         while ($row = $this->transactionsReader->getFileRow()) {
             $rawTransaction = $this->transactionsReader->parseRow($row);
-            // var_dump($rawTransaction[0]);
 
             if (!is_array($rawTransaction)) {
                 throw new \Exception("Error processing transaction. Must be an array", 1);
@@ -87,14 +78,7 @@ class FileMerchantService implements TransactionFetcherInterface
             $this->transactions[] = $convertedTransaction;
         }
 
-        var_dump($this->transactions);
-        die;
-
         $this->transactionsReader->closeStream();
-
-        return [
-            'transactions' => $this->transactions
-        ];
     }
 
     /**
@@ -117,14 +101,117 @@ class FileMerchantService implements TransactionFetcherInterface
             }
 
             $converted[$transaction[$i]] = $amount++;
-
         }
 
         return $converted;
     }
 
-    public function getConvertedTransactions()
+    public function calculateTotalPrice()
     {
-        return $this->converted;
+        // var_dump($this->products);
+        // var_dump($this->transactions);
+        // die;
+        foreach ($this->transactions as $transaction) {
+            var_dump($transaction);
+            if ($transaction != null) {
+                $this->totalPrices[] = $this->calculateTransactionPrice($transaction);
+            }
+        }
+
+        var_dump($this->totalPrices);
+        die;
+    }
+
+    protected function calculateTransactionPrice($transaction)
+    {
+        $totalTransactionPrice = 0;
+
+        foreach ($transaction as $product => $amount) {
+            $totalProductPrice = 0;
+            echo "PARSING PRODUCT $product WITH AMOUNT $amount \n";
+
+            if (!$this->isValidProduct($product)) {
+                continue;
+            }
+
+            $productInformation = $this->getLoadedMasterProduct($product);
+            // echo "MASTER PRODUCT LOADED IN SKU FILE \n";
+            // var_dump($productInformation);
+
+            $individualPrice = $productInformation[1];
+            $promotion = explode(" for ", $productInformation[2]);
+
+            //No promotion
+            if (count($promotion) == 1) {
+                $totalProductPrice = $amount * $individualPrice; 
+            } else {
+                $promotionalAmount = $promotion[0];
+                $quantityPrice = $promotion[1];
+
+                $promotionalPrice = (int) ($amount / $promotionalAmount) * $quantityPrice;
+                $normalPrice = ($amount % $promotionalAmount) * $individualPrice;
+
+                $totalProductPrice = $promotionalPrice + $normalPrice;
+            }
+
+            // echo "TOTAL PRODUCT PRICE FOR PRODUCT $product IS $totalProductPrice \n";
+
+            $totalTransactionPrice += $totalProductPrice;
+        }
+
+        echo "TOTAL PRODUCT PRICE FOR TRANSACTION:\n";
+        var_dump($transaction);
+        echo $totalTransactionPrice."\n\n\n";
+
+        return $totalTransactionPrice;
+    }
+
+    protected function getLoadedMasterProduct($productName)
+    {
+        foreach ($this->products as $masterProduct) {
+            if ($productName == $masterProduct[0]) {
+                return $masterProduct;
+            }
+        } 
+    }
+
+    // protected function calculatePrice($product, $amount)
+    // {
+    //     $normalPrice = 0;
+    //     $promotionalPrice = 0;
+
+    //     foreach ($this->products as $p) {
+    //         if ($product == $p[0]) {
+    //             var_dump($product);
+    //             var_dump($amount);
+    //             var_dump($p);
+    //             $individualPrice = $p[1];
+    //             $promotion = explode(" for ", $p[2]);
+
+    //             //There is NOT any promotional price and offer
+    //             if (count($promotion) == 1) {
+    //                 return $amount * $individualPrice; 
+    //             } else {
+    //                 $promotionalAmount = $promotion[0];
+    //                 $quantityPrice = $promotion[1];
+
+    //                 $promotionalPrice = (int) ($amount / $promotionalAmount) * $quantityPrice;
+    //                 $normalPrice = ($amount % $promotionalAmount) * $individualPrice;
+
+    //                 return $promotionalPrice + $normalPrice;
+    //             }
+    //         }
+    //     }
+    // }
+
+    protected function isValidProduct($product)
+    {
+        foreach ($this->products as $position => $p) {
+            if ($p[0] == $product) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

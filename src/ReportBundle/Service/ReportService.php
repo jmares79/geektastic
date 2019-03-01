@@ -29,7 +29,7 @@ class ReportService
     {
         $this->merchantService->fetchProductsList();
         $this->merchantService->fetchTransactions();
-        // $this->merchantService->convertTransactions();
+        $this->merchantService->calculateTotalPrice();
     }
 
     /**
