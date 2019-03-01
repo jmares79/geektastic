@@ -1,0 +1,7 @@
+stream_data:
+    resource: "@StreamDataBundle/Resources/config/routing.yml"
+    prefix:   /
+
+# app:
+#     resource: '@AppBundle/Controller/'
+#     type: annotation

@@ -1,0 +1,26 @@
+# Learn more about services, parameters and containers at
+# http://symfony.com/doc/current/service_container.html
+parameters:
+    #parameter_name: value
+
+services:
+    file_reader_service:
+      class: StreamDataBundle\Service\FileReaderService
+      arguments: ['%dir_data_name%','%file_data_name%']
+    stream_data_service:
+      class: StreamDataBundle\Service\StreamDataService
+      arguments: ['@file_reader_service']
+    currency_exchange_rate_service:
+      class: CurrencyBundle\Service\StaticCurrencyExchangeRateService
+    currency_converter_service:
+      class: CurrencyBundle\Service\CurrencyConverterService
+      arguments: ["@currency_exchange_rate_service"]
+    output_printer_service:
+      class: ReportBundle\Service\OutputStdPrinterService
+    transaction_merchant_service:
+      class: MerchantBundle\Service\FileMerchantService
+      arguments: ["@currency_converter_service", "@stream_data_service"]
+    report_service:
+      class: ReportBundle\Service\ReportService
+      arguments: ["@output_printer_service", "@transaction_merchant_service"]
+
