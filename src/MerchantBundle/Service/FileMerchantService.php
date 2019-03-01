@@ -31,6 +31,11 @@ class FileMerchantService implements TransactionFetcherInterface
         return $this->transactions['transactions'];
     }
 
+    public function getFetchedProductsList()
+    {
+        return $this->products;
+    }
+
     /**
      * Fetches the product list from a file source, returning a list of them
      *
@@ -88,7 +93,7 @@ class FileMerchantService implements TransactionFetcherInterface
      *
      * @return Sets the internal attribute with the converted transactions
      */
-    public function convertTransaction($transaction)
+    protected function convertTransaction($transaction)
     {
         $converted = [];
         $amount = 1;
@@ -108,18 +113,11 @@ class FileMerchantService implements TransactionFetcherInterface
 
     public function calculateTotalPrice()
     {
-        // var_dump($this->products);
-        // var_dump($this->transactions);
-        // die;
         foreach ($this->transactions as $transaction) {
-            var_dump($transaction);
             if ($transaction != null) {
                 $this->totalPrices[] = $this->calculateTransactionPrice($transaction);
             }
         }
-
-        var_dump($this->totalPrices);
-        die;
     }
 
     protected function calculateTransactionPrice($transaction)
@@ -128,15 +126,12 @@ class FileMerchantService implements TransactionFetcherInterface
 
         foreach ($transaction as $product => $amount) {
             $totalProductPrice = 0;
-            echo "PARSING PRODUCT $product WITH AMOUNT $amount \n";
 
             if (!$this->isValidProduct($product)) {
                 continue;
             }
 
             $productInformation = $this->getLoadedMasterProduct($product);
-            // echo "MASTER PRODUCT LOADED IN SKU FILE \n";
-            // var_dump($productInformation);
 
             $individualPrice = $productInformation[1];
             $promotion = explode(" for ", $productInformation[2]);
@@ -154,14 +149,8 @@ class FileMerchantService implements TransactionFetcherInterface
                 $totalProductPrice = $promotionalPrice + $normalPrice;
             }
 
-            // echo "TOTAL PRODUCT PRICE FOR PRODUCT $product IS $totalProductPrice \n";
-
             $totalTransactionPrice += $totalProductPrice;
         }
-
-        echo "TOTAL PRODUCT PRICE FOR TRANSACTION:\n";
-        var_dump($transaction);
-        echo $totalTransactionPrice."\n\n\n";
 
         return $totalTransactionPrice;
     }
@@ -174,35 +163,6 @@ class FileMerchantService implements TransactionFetcherInterface
             }
         } 
     }
-
-    // protected function calculatePrice($product, $amount)
-    // {
-    //     $normalPrice = 0;
-    //     $promotionalPrice = 0;
-
-    //     foreach ($this->products as $p) {
-    //         if ($product == $p[0]) {
-    //             var_dump($product);
-    //             var_dump($amount);
-    //             var_dump($p);
-    //             $individualPrice = $p[1];
-    //             $promotion = explode(" for ", $p[2]);
-
-    //             //There is NOT any promotional price and offer
-    //             if (count($promotion) == 1) {
-    //                 return $amount * $individualPrice; 
-    //             } else {
-    //                 $promotionalAmount = $promotion[0];
-    //                 $quantityPrice = $promotion[1];
-
-    //                 $promotionalPrice = (int) ($amount / $promotionalAmount) * $quantityPrice;
-    //                 $normalPrice = ($amount % $promotionalAmount) * $individualPrice;
-
-    //                 return $promotionalPrice + $normalPrice;
-    //             }
-    //         }
-    //     }
-    // }
 
     protected function isValidProduct($product)
     {

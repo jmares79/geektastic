@@ -2,63 +2,103 @@
 use PHPUnit\Framework\TestCase;
 
 use MerchantBundle\Service\FileMerchantService;
-use CurrencyBundle\Service\CurrencyConverterService;
-use StreamDataBundle\Service\StreamDataService;
+use StreamDataBundle\Service\FileReaderService;
 
 class FileMerchantServiceTest extends TestCase
 {
-    const COUNT_ROWS = 5;
+    const COUNT_ROWS = 7;
     const NO_DATA = 0;
-    const ID = '2';
 
-    protected $mockedConverter;
-    protected $mockedStream;
+    protected $mockedProductReader;
+    protected $mockedTransactionsReader;
     protected $merchant;
 
     public function setUp()
     {
-        $this->mockedStream = $this->createMock(StreamDataService::class);
-        $this->mockedConverter = $this->createMock(CurrencyConverterService::class);
+        $this->mockedProductReader = $this->createMock(FileReaderService::class);
+        $this->mockedTransactionsReader = $this->createMock(FileReaderService::class);
 
-        $this->merchant = new FileMerchantService($this->mockedConverter, $this->mockedStream);
+        $this->merchant = new FileMerchantService($this->mockedProductReader, $this->mockedTransactionsReader);
+    }
+
+    /**
+     * @dataProvider masterProductsProvider
+     */
+    public function testFetchProductsList($providedRow, $count)
+    {
+        $this->mockedProductReader
+            ->method('parseRow')
+            ->willReturn($providedRow);
+
+        $this->merchant->fetchProductsList();
+        $products = $this->merchant->getFetchedProductsList();
+
+        $this->assertCount($count, $products);
     }
 
     /**
      * @dataProvider transactionsProvider
      */
-    public function testFetchTransactions($merchantId, $provided, $count)
-    {
-        $this->mockedStream
-            ->method('fetchData')
-            ->willReturn($provided);
+    // public function testFetchTransactions($merchantId, $providedRow, $count)
+    // {
+    //     $this->mockedTransactionsReader
+    //         ->method('parseRow')
+    //         ->willReturn($providedRow);
 
-        $this->merchant->fetchTransactions($merchantId);
-        $transactions = $this->merchant->getFetchedTransactions();
+    //     $this->merchant->fetchTransactions();
+    //     $transactions = $this->merchant->getFetchedTransactions();
 
-        $this->assertCount($count, $transactions);
-    }
+    //     $this->assertCount($count, $transactions);
+    // }
 
     public function transactionsProvider()
     {
         $transactions = array(
-            'header' => array("merchant", "date", "value"),
+            'header' => array("Products"),
             'transactions' => array(
-                array("2", "01/05/2010", "£50.00"),
-                array("2", "01/05/2010", "$66.10"),
-                array("2", "02/05/2010", "€12.00"),
-                array("2", "02/05/2010", "£6.50"),
-                array("2", "04/05/2010", "€6.50"),
+                array("AAAA"),
+                array("ABCDE"),
+                array("XXXX"),
+                array("EFFEEFG"),
+                array("BDBAD"),
+                array("AEEBABF"),
+                array("A")
             )
         );
 
         $emptyTransactions = array(
-            'header' => array("merchant", "date", "value"),
+            'header' => array("Products"),
             'transactions' => array()
         );
 
         return array(
-            array(self::ID, $transactions, self::COUNT_ROWS),
-            array(self::ID, $emptyTransactions, self::NO_DATA)
+            array($transactions, self::COUNT_ROWS),
+            array($emptyTransactions, self::NO_DATA)
+        );
+    }
+
+    public function masterProductsProvider()
+    {
+        $products = array(
+            'header' => array("Item","Price","Offer"),
+            'products' => array(
+                array("A","     50","3 for 130"),
+                array("B","     30","2 for 45"),
+                array("C","     20",""),
+                array("D","     15",""),
+                array("E","     4","5 for 15"),
+                array("F","     8","3 for 12"),
+            )
+        );
+
+        $emptyProducts = array(
+            'header' => array("Item","Price","Offer"),
+            'products' => array()
+        );
+
+        return array(
+            array($products, count($emptyProducts['products'])),
+            array($emptyProducts, count($emptyProducts['products'])),
         );
     }
 }

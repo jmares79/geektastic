@@ -18,4 +18,5 @@ parameters:
     # A secret key that's used to generate certain security-related tokens
     secret: ThisTokenIsNotSoSecretChangeIt
     dir_data_name: 'data/'
-    file_data_name: 'data.csv'
+    products_data_name: product_prices.csv
+    transactions_data_name: transactions.csv
