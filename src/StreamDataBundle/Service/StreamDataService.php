@@ -9,7 +9,7 @@ use StreamDataBundle\Interfaces\FileReaderInterface;
 /**
  *  Class for implementing a stream data fetcher
  */
-class StreamDataService implements StreamDataInterface
+class StreamDataService //implements StreamDataInterface
 {
     protected $reader;
     protected $transactions = [];
@@ -20,19 +20,61 @@ class StreamDataService implements StreamDataInterface
     }
 
     /**
-     * Fetchs transactions from a stream
+     * Fetchs product list from a stream
      *
-     * @param int $merchantId
      * @param internal $reader Service
      *
      * @return An array with all the data to be shown
      */
-    public function fetchData($merchantId)
+    public function fetchProductsList()
     {
         $this->reader->openStream();
 
         $this->reader->parseHeader();
-        $data = $this->getData($merchantId);
+
+        while ($row = $this->reader->getFileRow()) {
+            $transaction = $this->reader->parseRow($row);
+
+            if ($transaction[0] == $merchantId) {
+                $this->transactions[] = $transaction;
+            }
+        }
+
+        return [
+            'header' => $this->reader->getHeader(),
+            'transactions' => $this->transactions
+        ];
+
+        $this->reader->closeStream();
+
+        return $data;
+    }
+
+    /**
+     * Fetches the transactions
+     *
+     * @param internal $reader Service
+     *
+     * @return An array with all the data to be shown
+     */
+    public function fetchTransactions()
+    {
+        $this->reader->openStream();
+
+        $this->reader->parseHeader();
+
+        while ($row = $this->reader->getFileRow()) {
+            $transaction = $this->reader->parseRow($row);
+
+            if ($transaction[0] == $merchantId) {
+                $this->transactions[] = $transaction;
+            }
+        }
+
+        return [
+            'header' => $this->reader->getHeader(),
+            'transactions' => $this->transactions
+        ];
 
         $this->reader->closeStream();
 
@@ -46,19 +88,19 @@ class StreamDataService implements StreamDataInterface
      *
      * @return An array with the header and transactions
      */
-    protected function getData($merchantId)
-    {
-        while ($row = $this->reader->getFileRow()) {
-            $transaction = $this->reader->parseRow($row);
+    // protected function getData($merchantId)
+    // {
+    //     while ($row = $this->reader->getFileRow()) {
+    //         $transaction = $this->reader->parseRow($row);
 
-            if ($transaction[0] == $merchantId) {
-                $this->transactions[] = $transaction;
-            }
-        }
+    //         if ($transaction[0] == $merchantId) {
+    //             $this->transactions[] = $transaction;
+    //         }
+    //     }
 
-        return [
-            'header' => $this->reader->getHeader(),
-            'transactions' => $this->transactions
-        ];
-    }
+    //     return [
+    //         'header' => $this->reader->getHeader(),
+    //         'transactions' => $this->transactions
+    //     ];
+    // }
 }

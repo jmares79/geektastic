@@ -3,65 +3,124 @@
 namespace MerchantBundle\Service;
 
 use MerchantBundle\Interfaces\TransactionFetcherInterface;
-use CurrencyBundle\Interfaces\CurrencyConverterInterface;
 use StreamDataBundle\Interfaces\StreamDataInterface;
+use StreamDataBundle\Interfaces\FileReaderInterface;
 
 /**
  * Service that fetches transactions from a CSV file
  */
 class FileMerchantService implements TransactionFetcherInterface
 {
-    protected $converter;
-    protected $stream;
-    protected $data;
-    protected $converted;
+    protected $productsReader;
+    protected $transactionsReader;
+    protected $products = array();
+    protected $transactions = array();
 
     public function __construct(
-        CurrencyConverterInterface $converter,
-        StreamDataInterface $stream
+        FileReaderInterface $productsReader,
+        FileReaderInterface $transactionsReader
     )
     {
-        $this->converter = $converter;
-        $this->stream = $stream;
+        $this->productsReader = $productsReader;
+        $this->transactionsReader = $transactionsReader;
     }
 
-    public function getHeader()
-    {
-        return $this->data['header'];
-    }
+    // public function getHeader()
+    // {
+    //     return $this->transactions['header'];
+    // }
 
     public function getFetchedTransactions()
     {
-        return $this->data['transactions'];
+        return $this->transactions['transactions'];
     }
+
     /**
-     * Fetches the transaction from a file source, returning a list of them
+     * Fetches the product list from a file source, returning a list of them
      *
-     * @param int $merchantId
+     * @return void Loads internal structure with the products list
+     */
+    public function fetchProductsList()
+    {
+        $this->productsReader->openStream();
+        $this->productsReader->parseHeader();
+
+        while ($row = $this->productsReader->getFileRow()) {
+            $this->products[] = $this->productsReader->parseRow($row);
+        }
+
+        $this->productsReader->closeStream();
+
+        return [
+            'products' => $this->products
+        ];
+    }
+
+    /**
+     * Fetches the transactions from a file source, returning a list of them
      *
      * @return An array with the converted transactions
      */
-    public function fetchTransactions($merchantId = null)
+    public function fetchTransactions()
     {
-        $this->data = $this->stream->fetchData($merchantId);
+        $this->transactionsReader->openStream();
+        $this->transactionsReader->parseHeader();
+
+        while ($row = $this->transactionsReader->getFileRow()) {
+            $rawTransaction = $this->transactionsReader->parseRow($row);
+            // var_dump($rawTransaction[0]);
+
+            if (!is_array($rawTransaction)) {
+                throw new \Exception("Error processing transaction. Must be an array", 1);
+            }
+
+            $t = str_split($rawTransaction[0]);
+            sort($t);
+            $transaction = implode($t);
+
+            if ($transaction != '') {
+                $convertedTransaction = $this->convertTransaction($transaction);
+            } else {
+                $convertedTransaction = null;
+            }
+
+            $this->transactions[] = $convertedTransaction;
+        }
+
+        var_dump($this->transactions);
+        die;
+
+        $this->transactionsReader->closeStream();
+
+        return [
+            'transactions' => $this->transactions
+        ];
     }
 
     /**
-     * Convert the transactions by exchanging the amount to the base currency
+     * Convert an individual transaction parsed row for a better handling when processing prices
      *
-     * @param internal $data
+     * @param string $transaction The transaction to be mapped and converted
      *
      * @return Sets the internal attribute with the converted transactions
      */
-    public function convertTransactions()
+    public function convertTransaction($transaction)
     {
         $converted = [];
+        $amount = 1;
+        $currentChar = $transaction[0];
 
-        foreach ($this->data['transactions'] as $transaction) {
-            list($id, $date, $amount) = $transaction;
+        for ($i = 0; $i < strlen($transaction); $i++) {
+            if ($transaction[$i] != $currentChar) {
+                $amount = 1;
+                $currentChar = $transaction[$i];
+            }
 
-            $this->converted[] = [$id, $date, $this->converter->convert($amount)];
+            $converted[$transaction[$i]] = $amount++;
+
         }
+
+        return $converted;
     }
 
     public function getConvertedTransactions()

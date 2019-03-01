@@ -27,9 +27,9 @@ class FileReaderService implements FileReaderInterface
         $this->setStreamDirectory = $dir;
     }
 
-    public function setStreamPath($path)
+    public function setStreamName($streamName)
     {
-        $this->setStreamPath = $path;
+        $this->streamName = $streamName;
     }
 
     public function openStream()
@@ -77,7 +77,7 @@ class FileReaderService implements FileReaderInterface
      */
     public function parseRow($row)
     {
-        return explode(";", str_replace("\"", "", $row[0]));
+        return array_map('trim', explode(";", str_replace("\"", "", $row[0])));
     }
 
     protected function getFullPath()

@@ -27,8 +27,9 @@ class ReportService
      */
     public function createReport()
     {
+        $this->merchantService->fetchProductsList();
         $this->merchantService->fetchTransactions();
-        $this->merchantService->convertTransactions();
+        // $this->merchantService->convertTransactions();
     }
 
     /**

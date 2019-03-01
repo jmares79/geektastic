@@ -4,5 +4,6 @@ namespace MerchantBundle\Interfaces;
 
 interface TransactionFetcherInterface
 {
-    public function fetchTransactions($merchantId);
+    public function fetchProductsList();
+    public function fetchTransactions();
 }
