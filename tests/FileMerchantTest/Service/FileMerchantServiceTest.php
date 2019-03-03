@@ -17,53 +17,72 @@ class FileMerchantServiceTest extends TestCase
     {
         $this->mockedProductReader = $this->createMock(FileReaderService::class);
         $this->mockedTransactionsReader = $this->createMock(FileReaderService::class);
-
         $this->merchant = new FileMerchantService($this->mockedProductReader, $this->mockedTransactionsReader);
     }
 
-    /**
-     * @dataProvider masterProductsProvider
-     */
-    public function testFetchProductsList($providedRow, $count)
+    public function testFetchProductsList()
     {
         $this->mockedProductReader
+            // ->expects($this->at(0))
+            ->method('getFileRow')
+            ->will($this->onConsecutiveCalls(array("A;  4;3 for 8"), array("F;  8;3 for 12"), false));
+
+         $this->mockedProductReader
+            // ->expects($this->at(0))
             ->method('parseRow')
-            ->willReturn($providedRow);
+            ->will($this->onConsecutiveCalls(array("A","4","3 for 8"), array("F","8","3 for 12")));
+
 
         $this->merchant->fetchProductsList();
         $products = $this->merchant->getFetchedProductsList();
 
-        $this->assertCount($count, $products);
+        $this->assertCount(2, $products);
     }
 
     /**
      * @dataProvider transactionsProvider
      */
-    // public function testFetchTransactions($merchantId, $providedRow, $count)
+    // public function testFetchTransactions($providedRow, $count)
     // {
+    //     // var_dump($providedRow);
     //     $this->mockedTransactionsReader
+    //         ->expects($this->at(0))
+    //         ->method('getFileRow')
+    //         ->will($this->returnValue(array("AAAA")));
+
+    //     $this->mockedTransactionsReader
+    //         ->expects($this->at(1))
+    //         ->method('getFileRow')
+    //         ->will($this->returnValue(array("")));
+
+    //     $this->mockedTransactionsReader
+    //         ->expects($this->at(0))
     //         ->method('parseRow')
-    //         ->willReturn($providedRow);
+    //         ->will($this->returnValue(array("AAAA")));
+
+    //     $this->mockedTransactionsReader
+    //         ->expects($this->at(1))
+    //         ->method('parseRow')
+    //         ->will($this->returnValue(array("")));
 
     //     $this->merchant->fetchTransactions();
     //     $transactions = $this->merchant->getFetchedTransactions();
 
-    //     $this->assertCount($count, $transactions);
+    //     // $this->assertCount($count, $transactions);
     // }
 
     public function transactionsProvider()
     {
         $transactions = array(
-            'header' => array("Products"),
-            'transactions' => array(
+            // 'transactions' => array(
                 array("AAAA"),
-                array("ABCDE"),
-                array("XXXX"),
-                array("EFFEEFG"),
-                array("BDBAD"),
-                array("AEEBABF"),
-                array("A")
-            )
+                // array("ABCDE"),
+                // array("XXXX"),
+                // array("EFFEEFG"),
+                // array("BDBAD"),
+                // array("AEEBABF"),
+                // array("A")
+            // )
         );
 
         $emptyTransactions = array(
@@ -72,8 +91,8 @@ class FileMerchantServiceTest extends TestCase
         );
 
         return array(
-            array($transactions, self::COUNT_ROWS),
-            array($emptyTransactions, self::NO_DATA)
+            array(array("AAAA"), self::COUNT_ROWS),
+            // array($emptyTransactions, self::NO_DATA)
         );
     }
 
@@ -82,12 +101,13 @@ class FileMerchantServiceTest extends TestCase
         $products = array(
             'header' => array("Item","Price","Offer"),
             'products' => array(
-                array("A","     50","3 for 130"),
-                array("B","     30","2 for 45"),
-                array("C","     20",""),
-                array("D","     15",""),
-                array("E","     4","5 for 15"),
+                // array("A","     50","3 for 130"),
+                // array("B","     30","2 for 45"),
+                // array("C","     20",""),
+                // array("D","     15",""),
+                // array("E","     4","5 for 15"),
                 array("F","     8","3 for 12"),
+                array(NULL),
             )
         );
 
@@ -97,7 +117,7 @@ class FileMerchantServiceTest extends TestCase
         );
 
         return array(
-            array($products, count($emptyProducts['products'])),
+            array($products, count($products['products'])),
             array($emptyProducts, count($emptyProducts['products'])),
         );
     }

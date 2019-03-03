@@ -28,7 +28,7 @@ class FileMerchantService implements TransactionFetcherInterface
 
     public function getFetchedTransactions()
     {
-        return $this->transactions['transactions'];
+        return $this->transactions;
     }
 
     public function getFetchedProductsList()
@@ -43,13 +43,22 @@ class FileMerchantService implements TransactionFetcherInterface
      */
     public function fetchProductsList()
     {
+        echo "HERE\n";
+        // var_dump($this->productsReader);
+        // die;
         $this->productsReader->openStream();
         $this->productsReader->parseHeader();
 
-        while ($row = $this->productsReader->getFileRow()) {
+        $row = $this->productsReader->getFileRow();
+        // var_dump($row);
+        // die;
+        while ($row) {
             $this->products[] = $this->productsReader->parseRow($row);
+            $row = $this->productsReader->getFileRow();
+            // var_dump($row);
         }
-
+        var_dump($this->products);
+        // die;
         $this->productsReader->closeStream();
     }
 
@@ -65,7 +74,7 @@ class FileMerchantService implements TransactionFetcherInterface
 
         while ($row = $this->transactionsReader->getFileRow()) {
             $rawTransaction = $this->transactionsReader->parseRow($row);
-
+            var_dump($rawTransaction);
             if (!is_array($rawTransaction)) {
                 throw new \Exception("Error processing transaction. Must be an array", 1);
             }
