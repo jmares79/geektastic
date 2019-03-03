@@ -123,16 +123,12 @@ class FileMerchantService implements TransactionFetcherInterface
                 $this->totalPrices[] = $this->calculateTransactionPrice($transaction);
             }
         }
-        echo "\nTOTAL PRICES\n";
-        var_dump($this->totalPrices);
     }
 
     protected function calculateTransactionPrice($transaction)
     {
         $totalTransactionPrice = 0;
-        echo "TRANSAC\n";
-        var_dump($transaction);
-        echo "-------\n";
+ 
         foreach ($transaction as $product => $amount) {
             $totalProductPrice = 0;
 
@@ -141,9 +137,6 @@ class FileMerchantService implements TransactionFetcherInterface
             }
 
             $productInformation = $this->getLoadedMasterProduct($product);
-            echo "PRODUCT\n";
-            var_dump($productInformation);
-            echo "-------\n";
             $individualPrice = $productInformation[1];
             $promotion = explode(" for ", $productInformation[2]);
 
