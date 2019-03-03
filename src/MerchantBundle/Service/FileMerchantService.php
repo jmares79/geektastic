@@ -36,6 +36,11 @@ class FileMerchantService implements TransactionFetcherInterface
         return $this->products;
     }
 
+    public function getTotalPrices()
+    {
+        return $this->totalPrices;
+    }
+
     /**
      * Fetches the product list from a file source, returning a list of them
      *
@@ -43,22 +48,13 @@ class FileMerchantService implements TransactionFetcherInterface
      */
     public function fetchProductsList()
     {
-        echo "HERE\n";
-        // var_dump($this->productsReader);
-        // die;
         $this->productsReader->openStream();
         $this->productsReader->parseHeader();
 
-        $row = $this->productsReader->getFileRow();
-        // var_dump($row);
-        // die;
-        while ($row) {
+        while ($row = $this->productsReader->getFileRow()) {
             $this->products[] = $this->productsReader->parseRow($row);
-            $row = $this->productsReader->getFileRow();
-            // var_dump($row);
         }
-        var_dump($this->products);
-        // die;
+
         $this->productsReader->closeStream();
     }
 
@@ -74,7 +70,7 @@ class FileMerchantService implements TransactionFetcherInterface
 
         while ($row = $this->transactionsReader->getFileRow()) {
             $rawTransaction = $this->transactionsReader->parseRow($row);
-            var_dump($rawTransaction);
+
             if (!is_array($rawTransaction)) {
                 throw new \Exception("Error processing transaction. Must be an array", 1);
             }
@@ -127,12 +123,16 @@ class FileMerchantService implements TransactionFetcherInterface
                 $this->totalPrices[] = $this->calculateTransactionPrice($transaction);
             }
         }
+        echo "\nTOTAL PRICES\n";
+        var_dump($this->totalPrices);
     }
 
     protected function calculateTransactionPrice($transaction)
     {
         $totalTransactionPrice = 0;
-
+        echo "TRANSAC\n";
+        var_dump($transaction);
+        echo "-------\n";
         foreach ($transaction as $product => $amount) {
             $totalProductPrice = 0;
 
@@ -141,7 +141,9 @@ class FileMerchantService implements TransactionFetcherInterface
             }
 
             $productInformation = $this->getLoadedMasterProduct($product);
-
+            echo "PRODUCT\n";
+            var_dump($productInformation);
+            echo "-------\n";
             $individualPrice = $productInformation[1];
             $promotion = explode(" for ", $productInformation[2]);
 

@@ -20,79 +20,88 @@ class FileMerchantServiceTest extends TestCase
         $this->merchant = new FileMerchantService($this->mockedProductReader, $this->mockedTransactionsReader);
     }
 
-    public function testFetchProductsList()
+    protected function setMockedProductReaderBehaviour($values)
     {
+        var_dump($values);
         $this->mockedProductReader
-            // ->expects($this->at(0))
             ->method('getFileRow')
-            ->will($this->onConsecutiveCalls(array("A;  4;3 for 8"), array("F;  8;3 for 12"), false));
+            ->will(call_user_func_array(array($this, 'onConsecutiveCalls'), $values));
+            // ->will($this->onConsecutiveCalls(array("A;  4;3 for 8"), array("F;  8;3 for 12"), false));
 
          $this->mockedProductReader
-            // ->expects($this->at(0))
             ->method('parseRow')
-            ->will($this->onConsecutiveCalls(array("A","4","3 for 8"), array("F","8","3 for 12")));
+            ->will(call_user_func_array(array($this, 'onConsecutiveCalls'), $values));
+    }
 
+    protected function setMockedTransactionReaderBehaviour($values)
+    {
+        $this->mockedTransactionsReader
+            ->method('getFileRow')
+            ->will(call_user_func_array(array($this, 'onConsecutiveCalls'), $values));
+
+        $this->mockedTransactionsReader
+            ->method('parseRow')
+            ->will(call_user_func_array(array($this, 'onConsecutiveCalls'), $values));
+    }
+
+    /**
+     * @dataProvider masterProductsProvider
+     */
+    public function testFetchProductsList($providedRow, $expectedCount)
+    {
+        $this->setMockedProductReaderBehaviour($providedRow);
 
         $this->merchant->fetchProductsList();
         $products = $this->merchant->getFetchedProductsList();
 
-        $this->assertCount(2, $products);
+        $this->assertCount($expectedCount, $products);
     }
 
     /**
      * @dataProvider transactionsProvider
      */
-    // public function testFetchTransactions($providedRow, $count)
+    public function testFetchTransactions($providedRow, $expectedCount)
+    {
+        $this->setMockedTransactionReaderBehaviour($providedRow);
+
+        $this->merchant->fetchTransactions();
+        $transactions = $this->merchant->getFetchedTransactions();
+
+        $this->assertCount($expectedCount, $transactions);
+    }
+
+    // public function testCalculateTotalPrice($providedRow, $expectedCount)
     // {
-    //     // var_dump($providedRow);
-    //     $this->mockedTransactionsReader
-    //         ->expects($this->at(0))
-    //         ->method('getFileRow')
-    //         ->will($this->returnValue(array("AAAA")));
+    //     $this->setMockedProductReaderBehaviour();
+    //     $this->setMockedTransactionReaderBehaviour();
 
-    //     $this->mockedTransactionsReader
-    //         ->expects($this->at(1))
-    //         ->method('getFileRow')
-    //         ->will($this->returnValue(array("")));
-
-    //     $this->mockedTransactionsReader
-    //         ->expects($this->at(0))
-    //         ->method('parseRow')
-    //         ->will($this->returnValue(array("AAAA")));
-
-    //     $this->mockedTransactionsReader
-    //         ->expects($this->at(1))
-    //         ->method('parseRow')
-    //         ->will($this->returnValue(array("")));
-
+    //     $this->merchant->fetchProductsList();
     //     $this->merchant->fetchTransactions();
-    //     $transactions = $this->merchant->getFetchedTransactions();
+    //     $this->merchant->calculateTotalPrice();
 
-    //     // $this->assertCount($count, $transactions);
+    //     $totalPrices = $this->merchant->getTotalPrices();
+
+    //     $this->assertEquals(12, $totalPrices[0]);
+    //     $this->assertEquals(4, $totalPrices[1]);
     // }
 
     public function transactionsProvider()
     {
         $transactions = array(
-            // 'transactions' => array(
+            'transactions' => array(
                 array("AAAA"),
-                // array("ABCDE"),
-                // array("XXXX"),
-                // array("EFFEEFG"),
-                // array("BDBAD"),
-                // array("AEEBABF"),
-                // array("A")
-            // )
-        );
-
-        $emptyTransactions = array(
-            'header' => array("Products"),
-            'transactions' => array()
+                array("ABCDE"),
+                array("XXXX"),
+                array("EFFEEFG"),
+                array("BDBAD"),
+                array("AEEBABF"),
+                array("A"),
+                array(false),
+            )
         );
 
         return array(
-            array(array("AAAA"), self::COUNT_ROWS),
-            // array($emptyTransactions, self::NO_DATA)
+            array($transactions['transactions'], count($transactions['transactions']))
         );
     }
 
@@ -101,13 +110,12 @@ class FileMerchantServiceTest extends TestCase
         $products = array(
             'header' => array("Item","Price","Offer"),
             'products' => array(
-                // array("A","     50","3 for 130"),
-                // array("B","     30","2 for 45"),
-                // array("C","     20",""),
-                // array("D","     15",""),
-                // array("E","     4","5 for 15"),
-                array("F","     8","3 for 12"),
-                array(NULL),
+                array("A;  50;3 for 130"),
+                array("B;  30;2 for 45"),
+                array("C;  20;"),
+                array("D;  15;"),
+                array("E;  4;5 for 15"),
+                array(false),
             )
         );
 
@@ -117,8 +125,7 @@ class FileMerchantServiceTest extends TestCase
         );
 
         return array(
-            array($products, count($products['products'])),
-            array($emptyProducts, count($emptyProducts['products'])),
+            array($products['products'], count($products['products']))
         );
     }
 }
