@@ -1,21 +1,28 @@
 Geektastic Transactions Printer
-=========================
+===============================
 
 The objective for this program is to demonstrate OOP and unit testing skills.
 
 ### Task
-Create a simple report that shows transactions for a merchant id specified as command line argument.
-The data.csv file contains dummy data in different currencies, the report should be in GBP.
+Create a simple report that shows the total price of a list of transactions (Like supermarket checkouts) passed in the CSV file, according to a master products table, passed as another CSV file for the purpose of the test.
+
+The `product_prices.csv` file contains dummy data about master products table, while `transactions.csv` contains the info about them.
+
+The decision of setting the values in a CSV file was simply to save time and space as an example of model data structure.
+
+In a production environment this clearly wouldn't be an option, but a commercial database engine like MySQL, PostgreSQL, etc.
+
+However, for the purposes of the test, it's good for showing handling of data in another format.
 
 ### Installation
 Clone the repo to your preferred folder and execute "composer install".
 
 ### Usage
-From the project command line, execute "php bin/console app:create-report {id}", being the {id} the Merchant Id. Not providing an Id will throw an error.
+From the project command line, execute "php bin/console app:calc-total".
 
 ### Architecture
 
-The software is created based in Symfony framework (without some unnecesary bundles); the reason for using this framework is that it is a modern, up to date one, with all the neccesary pieces for constructing a powerful project (Doctrine & Twig  out of the box, etc).
+The software is created based in Symfony framework (without some unnecesary bundles); the reason for using this framework is that it is a modern, up to date one, with all the neccesary pieces for constructing a powerful project (Doctrine & Twig out of the box, etc).
 
 Important to be noticed is that bundles that were not required for the project were removed from the composer file.
 
@@ -32,12 +39,9 @@ However, as this project is thinking as an exam/test with time constraints, the 
 
 The project is configured with the following bundles:
 
-  * ReportBundle - This bundle wraps the creation of the main command to be executed and the Report Service, which provides the
-"createReport" & "printReport" methods being called by the command. Also, for the sake of not creating another bundle just for that, it wraps "OutputStdPrinterService", that provides the stdout functionality.
+  * ReportBundle - This bundle wraps the creation of the main command to be executed and the Report Service, which provides the "createReport" & "printReport" methods being called by the command. Also, for the sake of not creating another bundle just for that, it wraps "OutputStdPrinterService", that provides the stdout functionality.
 
- * MerchanBundle - This bundle provides, as a way of a "controller", the nexus between the report bundle and the rest of other bundles explained below. The mail purpose is to fetch the transactions from a data source/stream provided, and to return the transactions converted, using a converter service, also provided in another bundle.
-
- * CurrencyBundle - This bundle provides the functionality to both the conversion capabilities, as well as a service to get the current exchange rates (both are separated in different services). The converter service provides a method for convert any amount to GBP, while the exchange rate service provides that capability using a getExchangeRate method. the exchange rate was created as a fixed array with static values for test purposes only.
+ * MerchanBundle - This bundle provides, as a way of a "controller", the nexus between the report bundle and the rest of other bundles explained below. The mail purpose is to fetch the transactions from a data source/stream provided, and to return the transactions calculated.
 
  * StreamDataBundle - This bundle provides an abstratction layer for fetching the transactions from the specific data type. While this test provides a CSV file, any data type can be used: another file type, a database, an AWS etc. The means to add these will be pointed below.
 
@@ -48,7 +52,7 @@ The project is configured with the following bundles:
 
  For that, I did my best in structuring following OOP & SOLID techniques, allowing extending easily.
 
- Every service implements a series of interfaces, allowing the creation and use of any other concrete service easy.
+ Every service implements a series of interfaces (And following the "I" in SOLID, only those whom the class cares about), allowing the creation and use of any other concrete service easy.
 
  As the Dependency injection in the services expects interfaces, as long as that contract is followed, one can create a family of services for each bundle, and those will still be accepted in the contract, leaving the bulk part of the project untouched.
 
@@ -62,7 +66,6 @@ The project is configured with the following bundles:
 
  As it can be seen, modifying/extending is easy, providing as much as possible an Open-Closed principle.
 
-
  Execution path
  --------------
 
@@ -71,8 +74,7 @@ The project is configured with the following bundles:
  1. ReportCommand configures & executes the report service.
  2. ReportService get the Id passed and, via MerchantService, fetches and converts the transactions.
  3. MerchantService parses the transaction from the CSV file using a StreamData service, and converts them to GBP using a currency service.
- 4. StreamData open and parses the file, returning the raw data.
- 5. Currency get the exchange rate and converts the amount passed.
+ 4. StreamData (In our case, a FileReader) open and parses the file, returning the raw data.
  6. ReportService, via Outputprinter, shows the content to the stdout/console as expected
 
  Tests
@@ -86,12 +88,7 @@ The project is configured with the following bundles:
 
  This strategy is provided with the `createMock()` method that PHPUnit provides. The service dependencies were created following the `<MyServiceClass>::class` syntax, and then any needed method response was mocked using the `->method(<mymethod>)->willReturn(<response>);` syntax.
 
- Tests are provided for the following bundles:
-
-  * CurrencyBundle - Tests covers both CurrencyConverter & StaticCurrencyExchange.
-  * FileMerchantBundle - Tests covers FileMerchantService.
-  * StreamDataBundle - Tests covers StreamDataService.
-  * ReportBundle - Tests covers OutputStdPrinterService.
+ Tests are provided MerchantBundle - Tests covers MerchantService.
 
   Report creation tests were not provided for some reasons. First, the classes were created to use internal attributes, which has to be mocked using Reflection, which would take longer; and second because the `createReport()` method simply calls methods of FilerMerchant that were already been tested, so it would duplicate tests.
 
@@ -105,3 +102,7 @@ The project is configured with the following bundles:
   * Argument parsing, allowing different showing methods (example --table for print in table format, --file=path/to/file, --streamtype=mysql, etc)
   * A family of strategies for handling the previous options
   * Expose functionality through an API, creating Controllers & Routes (NOT provided)
+
+##Bugs
+
+Any found bug please create an issue and it will be fixed asap!!

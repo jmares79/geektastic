@@ -40,8 +40,7 @@ class ReportService
     public function printReport()
     {
         $this->outputPrinter->show(
-            $this->merchantService->getHeader(),
-            $this->merchantService->getConvertedTransactions()
+            $this->merchantService->getTotalPrices()
         );
     }
 }

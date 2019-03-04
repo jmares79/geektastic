@@ -10,9 +10,6 @@ services:
     transaction_reader_service:
       class: StreamDataBundle\Service\FileReaderService
       arguments: ['%dir_data_name%','%transactions_data_name%']
-    # stream_data_service:
-    #   class: StreamDataBundle\Service\StreamDataService
-    #   arguments: ['@file_reader_service']
     currency_exchange_rate_service:
       class: CurrencyBundle\Service\StaticCurrencyExchangeRateService
     currency_converter_service:
@@ -21,7 +18,7 @@ services:
     output_printer_service:
       class: ReportBundle\Service\OutputStdPrinterService
     transaction_merchant_service:
-      class: MerchantBundle\Service\FileMerchantService
+      class: MerchantBundle\Service\MerchantService
       arguments: ["@product_reader_service", "@transaction_reader_service"]
     report_service:
       class: ReportBundle\Service\ReportService

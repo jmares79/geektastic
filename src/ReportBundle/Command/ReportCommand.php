@@ -35,6 +35,6 @@ class ReportCommand extends ContainerAwareCommand
         $reportService = $this->getContainer()->get('report_service');
 
         $reportService->createReport();
-        // $reportService->printReport();
+        $reportService->printReport();
     }
 }

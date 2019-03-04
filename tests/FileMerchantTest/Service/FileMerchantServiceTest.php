@@ -1,15 +1,12 @@
 <?php
 
-use Tests\SimpleTestCase;
+use PHPUnit\Framework\TestCase;
 
-use MerchantBundle\Service\FileMerchantService;
+use MerchantBundle\Service\MerchantService;
 use StreamDataBundle\Service\FileReaderService;
 
-class FileMerchantServiceTest extends SimpleTestCase
+class MerchantServiceTest extends TestCase
 {
-    const COUNT_ROWS = 7;
-    const NO_DATA = 0;
-
     protected $mockedProductReader;
     protected $mockedTransactionsReader;
     protected $merchant;
@@ -18,7 +15,8 @@ class FileMerchantServiceTest extends SimpleTestCase
     {
         $this->mockedProductReader = $this->createMock(FileReaderService::class);
         $this->mockedTransactionsReader = $this->createMock(FileReaderService::class);
-        $this->merchant = new FileMerchantService($this->mockedProductReader, $this->mockedTransactionsReader);
+
+        $this->merchant = new MerchantService($this->mockedProductReader, $this->mockedTransactionsReader);
     }
 
     protected function setMockedProductReaderBehaviour($getFileRow, $parseRow)
@@ -65,7 +63,7 @@ class FileMerchantServiceTest extends SimpleTestCase
 
         $this->merchant->fetchTransactions();
         $transactions = $this->merchant->getFetchedTransactions();
-        // var_dump($transactions);
+
         $this->assertCount($expectedCount, $transactions);
     }
 
@@ -94,25 +92,6 @@ class FileMerchantServiceTest extends SimpleTestCase
 
     public function masterProductsProvider()
     {
-        // $products = array(
-        //     'header' => array("Item","Price","Offer"),
-        //     'getFileRow' => array(
-        //         array("A;  50;3 for 130"),
-        //         array("B;  30;2 for 45"),
-        //         array("C;  20;"),
-        //         array("D;  15;"),
-        //         array("E;  4;5 for 15"),
-        //         array(false),
-        //     ),
-        //     'parseRow' => array(
-        //         array("A","50","3 for 130"),
-        //         array("B","30","2 for 45"),
-        //         array("C","20", ""),
-        //         array("D","15", ""),
-        //         array("E","4","5 for 15"),
-        //         array(false),
-        //     )
-        // );
         $products = $this->getProductMockedData();
 
         return array(
@@ -122,19 +101,6 @@ class FileMerchantServiceTest extends SimpleTestCase
 
     public function transactionsProvider()
     {
-        // $transactions = array(
-        //     'transactions' => array(
-        //         array("AAAA"),
-        //         array("ABCDE"),
-        //         array("XXXX"),
-        //         array("EFFEEFG"),
-        //         array("BDBAD"),
-        //         array("AEEBABF"),
-        //         array("A"),
-        //         array(false),
-        //     )
-        // );
-
         $transactions = $this->getTransactionsMockedData();
         
         return array(
@@ -151,10 +117,49 @@ class FileMerchantServiceTest extends SimpleTestCase
          */
         $transactions = $this->getTransactionsMockedData();
 
-        $totalPrices = array(180, 119, 0,12,125,153,50);
+        $totalPrices = array(180,119,0,12,125,153,50);
 
         return array(
             array($products, $transactions['transactions'], $totalPrices)
+        );
+    }
+
+    protected function getProductMockedData()
+    {
+        return array(
+            'header' => array("Item","Price","Offer"),
+            'getFileRow' => array(
+                array("A;  50;3 for 130"),
+                array("B;  30;2 for 45"),
+                array("C;  20;"),
+                array("D;  15;"),
+                array("E;  4;5 for 15"),
+                array(false),
+            ),
+            'parseRow' => array(
+                array("A","50","3 for 130"),
+                array("B","30","2 for 45"),
+                array("C","20", ""),
+                array("D","15", ""),
+                array("E","4","5 for 15"),
+                array(false),
+            )
+        );
+    }
+
+    protected function getTransactionsMockedData()
+    {
+        return array(
+            'transactions' => array(
+                array("AAAA"),
+                array("ABCDE"),
+                array("XXXX"),
+                array("EFFEEFG"),
+                array("BDBAD"),
+                array("AEEBABF"),
+                array("A"),
+                array(false),
+            )
         );
     }
 }

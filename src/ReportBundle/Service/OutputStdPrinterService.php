@@ -9,10 +9,7 @@ use ReportBundle\Interfaces\OutputReportInterface;
  */
 class OutputStdPrinterService implements OutputReportInterface
 {
-    const DECIMALS = 2;
-    const SEPARATOR = ' - ';
-    const GBP = '£';
-
+    CONST HEADER = "TOTAL PRICE FOR THE CALCULATED TRANSACTIONS";
     /**
      * Implements the show method from OutputReportInterface for showing the report
      *
@@ -21,10 +18,10 @@ class OutputStdPrinterService implements OutputReportInterface
      *
      * @return Prints the data to stdout
      */
-    public function show($header, $transactions)
+    public function show($body, $header = null)
     {
         $this->showHeader($header);
-        $this->showTransactions($transactions);
+        $this->showBody($body);
     }
 
     /**
@@ -34,14 +31,12 @@ class OutputStdPrinterService implements OutputReportInterface
      *
      * @return Prints the header to stdout
      */
-    protected function showHeader($header)
+    protected function showHeader($header = null)
     {
-        $names = count($header);
-
-        for ($i = 0; $i < $names; $i++) {
-            echo ucfirst($header[$i]);
-
-            if ($i < $names-1) echo self::SEPARATOR;
+        if ($header == null) {
+            echo self::HEADER;
+        } else {
+            echo $header;
         }
 
         echo PHP_EOL;
@@ -54,14 +49,13 @@ class OutputStdPrinterService implements OutputReportInterface
      *
      * @return Prints the transactions to stdout
      */
-    protected function showTransactions($transactions)
+    protected function showBody($body)
     {
-        foreach ($transactions as $transaction) {
-            $transaction[2] = number_format($transaction[2], self::DECIMALS);
-            $transaction[2] = self::GBP . $transaction[2];
-
-            echo implode(self::SEPARATOR, $transaction);
-            echo PHP_EOL;
+        foreach ($body as $pos => $transaction) {
+            $pos++;
+            echo "$pos) $transaction \n";
         }
+        
+        echo PHP_EOL;
     }
 }

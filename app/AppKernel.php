@@ -10,11 +10,9 @@ class AppKernel extends Kernel
         $bundles = [
             new Symfony\Bundle\FrameworkBundle\FrameworkBundle(),
             new Symfony\Bundle\SecurityBundle\SecurityBundle(),
-            new Doctrine\Bundle\DoctrineBundle\DoctrineBundle(),
             new Sensio\Bundle\FrameworkExtraBundle\SensioFrameworkExtraBundle(),
             new ReportBundle\ReportBundle(),
             new MerchantBundle\MerchantBundle(),
-            new CurrencyBundle\CurrencyBundle(),
             new StreamDataBundle\StreamDataBundle(),
         ];
 

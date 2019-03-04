@@ -9,7 +9,7 @@ use StreamDataBundle\Interfaces\FileReaderInterface;
 /**
  * Service that fetches transactions from a CSV file
  */
-class FileMerchantService implements TransactionFetcherInterface
+class MerchantService implements TransactionFetcherInterface
 {
     protected $productsReader;
     protected $transactionsReader;
@@ -116,6 +116,11 @@ class FileMerchantService implements TransactionFetcherInterface
         return $converted;
     }
 
+    /**
+     * Calculates the total prices of the transactions
+     * 
+     * @return Sets the internal attribute with the total price
+     */
     public function calculateTotalPrice()
     {
         foreach ($this->transactions as $transaction) {
@@ -125,6 +130,11 @@ class FileMerchantService implements TransactionFetcherInterface
         }
     }
 
+    /**
+     * Calculates the price of individual transactions
+     * 
+     * @return float totalTransactionPrice
+     */
     protected function calculateTransactionPrice($transaction)
     {
         $totalTransactionPrice = 0;
@@ -136,7 +146,7 @@ class FileMerchantService implements TransactionFetcherInterface
                 continue;
             }
 
-            $productInformation = $this->getLoadedMasterProduct($product);
+            $productInformation = $this->getLoadedMasterProductByName($product);
             $individualPrice = $productInformation[1];
             $promotion = explode(" for ", $productInformation[2]);
 
@@ -147,7 +157,7 @@ class FileMerchantService implements TransactionFetcherInterface
                 $promotionalAmount = $promotion[0];
                 $quantityPrice = $promotion[1];
 
-                $promotionalPrice = (int) ($amount / $promotionalAmount) * $quantityPrice;
+                $promotionalPrice = ((int) ($amount / $promotionalAmount)) * $quantityPrice;
                 $normalPrice = ($amount % $promotionalAmount) * $individualPrice;
 
                 $totalProductPrice = $promotionalPrice + $normalPrice;
@@ -159,7 +169,7 @@ class FileMerchantService implements TransactionFetcherInterface
         return $totalTransactionPrice;
     }
 
-    protected function getLoadedMasterProduct($productName)
+    protected function getLoadedMasterProductByName($productName)
     {
         foreach ($this->products as $masterProduct) {
             if ($productName == $masterProduct[0]) {
