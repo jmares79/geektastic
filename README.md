@@ -15,10 +15,10 @@ In a production environment this clearly wouldn't be an option, but a commercial
 However, for the purposes of the test, it's good for showing handling of data in another format.
 
 ### Installation
-Clone the repo to your preferred folder and execute "composer install".
+Clone the repo to your preferred folder and execute `composer install`.
 
 ### Usage
-From the project command line, execute "php bin/console app:calc-total".
+From the project command line, execute `php bin/console app:calc-total`.
 
 ### Architecture
 
